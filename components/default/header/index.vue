@@ -1,5 +1,7 @@
 <template>
-  <header class="bg-surface-light border-b border-surface/40">
+  <header
+      class="sticky top-0 z-50 bg-surface-light border-b border-surface/40 backdrop-blur supports-[backdrop-filter]:bg-surface-light/80"
+  >
     <div class="container flex items-center justify-between py-3">
       <!-- Левая часть: ссылки -->
       <nav class="flex items-center gap-6">
