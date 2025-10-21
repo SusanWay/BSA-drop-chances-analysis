@@ -4,7 +4,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <section class="flex flex-col items-center justify-center py-12 text-center">
+  <section class="flex flex-col items-center justify-center py-4 text-center">
     <img
         src="/Lancer.webp"
         alt="Lancer"

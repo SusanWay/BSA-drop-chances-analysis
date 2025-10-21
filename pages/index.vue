@@ -1,7 +1,8 @@
 <!-- pages/index.vue -->
 <template>
-  <main class="container py-10">
+  <main class="container py-4">
     <WelcomeSection />
+
     <PrefaceSection />
 
     <!-- Секция про Jewel of Bless -->

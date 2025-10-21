@@ -1,7 +1,10 @@
+import calculator from "./calculator";
+
 export default {
     ru: {
         common: {
             brand: "Шансы дропа",
+            calculator: "Калькулятор",
             madeByPrefix: "Создано",
         },
 
@@ -186,11 +189,13 @@ export default {
                 },
             },
         },
+        ...calculator.ru,
     },
 
     en: {
         common: {
             brand: "Drop Chances",
+            calculator: "Calculator",
             madeByPrefix: "Created by",
         },
 
@@ -375,5 +380,6 @@ export default {
                 },
             },
         },
+        ...calculator.en,
     },
 } as const;
