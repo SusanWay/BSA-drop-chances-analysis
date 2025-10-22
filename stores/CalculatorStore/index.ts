@@ -4,28 +4,10 @@ import { computed, ref } from "vue";
 
 // ===== Константы =====
 export const MAX_TARGETS = 4 as const;
+const MAX_K = 4 as const; // k = 0..4
 
-// ===== Типы =====
-export type ModKey =
-    | "desolator" | "magic_desolator" | "reflect" | "lifesteal" | "magic_lifesteal"
-    | "mjolnir" | "mjolnir_armor" | "mkb" | "hp_regen" | "hp_regen_amp"
-    | "damage_block" | "manacost" | "crit" | "multicast";
-
-export interface ModMeta {
-    nameKey: string;
-    descKey: string;
-}
-
-export interface Weights {
-    k0: number;
-    k1: number;
-    k2: number;
-    k3: number;
-    k4: number;
-}
-
-// ===== Метаданные модов =====
-export const MOD_META: Record<ModKey, ModMeta> = {
+// ===== Метаданные модов (сначала объект, потом тип ключа) =====
+export const MOD_META = {
     desolator:       { nameKey: "mods.desolator.name",       descKey: "mods.desolator.desc" },
     magic_desolator: { nameKey: "mods.magic_desolator.name", descKey: "mods.magic_desolator.desc" },
     reflect:         { nameKey: "mods.reflect.name",         descKey: "mods.reflect.desc" },
@@ -40,65 +22,94 @@ export const MOD_META: Record<ModKey, ModMeta> = {
     manacost:        { nameKey: "mods.manacost.name",        descKey: "mods.manacost.desc" },
     crit:            { nameKey: "mods.crit.name",            descKey: "mods.crit.desc" },
     multicast:       { nameKey: "mods.multicast.name",       descKey: "mods.multicast.desc" },
-};
+} as const;
+
+export type ModKey = keyof typeof MOD_META;
+export type ModMeta = (typeof MOD_META)[ModKey];
 
 export const ALL_MODS = Object.keys(MOD_META) as ModKey[];
 
-// ===== Вспомогательные функции (строго типизированные) =====
+// ===== Веса как кортеж фиксированной длины =====
+export type Weights5 = readonly [number, number, number, number, number];
+const DEFAULT_WEIGHTS: Weights5 = [0.8218, 0.1089, 0.0396, 0.0198, 0.0099] as const;
+const DEFAULT_POOL: ModKey[] = [...ALL_MODS];
+
+// ===== Вспомогательные функции =====
 function nCr(n: number, r: number): number {
     if (r < 0 || r > n) return 0;
     if (r === 0 || r === n) return 1;
+    // симметрия для меньшего числа итераций
+    r = Math.min(r, n - r);
     let res = 1;
     for (let i = 1; i <= r; i++) res = (res * (n - r + i)) / i;
     return res;
 }
 
-function normalizeWeights(w: readonly number[]): number[] {
+function normalizeWeights(w: Weights5): Weights5 {
     const sum = w.reduce((a, b) => a + b, 0) || 1;
-    return w.map((x) => x / sum);
+    return [w[0] / sum, w[1] / sum, w[2] / sum, w[3] / sum, w[4] / sum];
 }
 
 function killsFor(P: number, p: number): number | null {
     if (p <= 0) return null;
     if (p >= 1) return 1;
-    const n = Math.log(1 - P) / Math.log(1 - p);
+    // устойчивее для малых p
+    const ln1mP = Math.log1p(-P);
+    const ln1mp = Math.log1p(-p);
+    const n = ln1mP / ln1mp;
     if (!isFinite(n) || n <= 0) return null;
     return Math.ceil(n);
 }
 
-// ===== STORE (setup-синтаксис) =====
+// Один Intl для форматирования
+const nfPct = new Intl.NumberFormat("ru-RU", { style: "percent", maximumFractionDigits: 4 });
+const nfInt = new Intl.NumberFormat("ru-RU");
+
+// безопасный апдейтер кортежа весов
+function updateWeightsTuple(w: Weights5, i: 0 | 1 | 2 | 3 | 4, v: number): Weights5 {
+    const nv = Math.max(0, v);
+    return [
+        i === 0 ? nv : w[0],
+        i === 1 ? nv : w[1],
+        i === 2 ? nv : w[2],
+        i === 3 ? nv : w[3],
+        i === 4 ? nv : w[4],
+    ];
+}
+
+// ===== STORE =====
 export const useCalculatorStore = defineStore("calculator", () => {
     // --- state
-    const pool = ref<ModKey[]>([...ALL_MODS]);
+    const pool = ref<ModKey[]>([...DEFAULT_POOL]);
     const picked = ref<ModKey[]>([]);
-    const weights = ref<Weights>({
-        k0: 0.8218,
-        k1: 0.1089,
-        k2: 0.0396,
-        k3: 0.0198,
-        k4: 0.0099,
-    });
+    const weights = ref<Weights5>(DEFAULT_WEIGHTS);
+
+    // --- derived helpers
+    const poolSet = computed(() => new Set(pool.value));
+    const pickedSet = computed(() => new Set(picked.value));
 
     // --- getters (computed)
     const M = computed<number>(() => pool.value.length);
     const tCount = computed<number>(() => picked.value.length);
     const reachedLimit = computed<boolean>(() => tCount.value >= MAX_TARGETS);
 
-    const weightsNorm = computed<number[]>(() =>
-        normalizeWeights([weights.value.k0, weights.value.k1, weights.value.k2, weights.value.k3, weights.value.k4])
-    );
+    const weightsNorm = computed<Weights5>(() => normalizeWeights(weights.value));
 
     // Вероятности
     const pAllPicked = computed<number>(() => {
         const w = weightsNorm.value;
         const Mv = M.value;
         const t = tCount.value;
+
+        if (t === 0) return 1;          // пустое множество всегда «выпало»
+        if (t > Mv || t > MAX_K) return 0;
+
         let s = 0;
-        for (let k = 0; k <= 4; k++) {
+        for (let k = 0; k <= MAX_K; k++) {
             if (k >= t && Mv >= k) {
                 const den = nCr(Mv, k);
                 const num = nCr(Mv - t, k - t);
-                s += w[k] * (den > 0 ? num / den : 0);
+                s += w[k as 0 | 1 | 2 | 3 | 4] * (den > 0 ? num / den : 0);
             }
         }
         return s;
@@ -108,23 +119,26 @@ export const useCalculatorStore = defineStore("calculator", () => {
         const w = weightsNorm.value;
         const t = tCount.value;
         const Mv = M.value;
-        if (t >= 0 && t <= 4 && Mv >= t) {
-            const den = nCr(Mv, t);
-            return w[t] * (den > 0 ? 1 / den : 0);
-        }
-        return 0;
+
+        if (t < 0 || t > MAX_K || Mv < t) return 0;
+
+        const den = nCr(Mv, t);
+        return w[t as 0 | 1 | 2 | 3 | 4] * (den > 0 ? 1 / den : 0);
     });
 
     const pAtLeastOne = computed<number>(() => {
         const w = weightsNorm.value;
         const Mv = M.value;
         const t = tCount.value;
+
+        if (t === 0 || t > Mv) return 0;
+
         let s = 0;
-        for (let k = 0; k <= 4; k++) {
+        for (let k = 0; k <= MAX_K; k++) {
             if (k <= Mv) {
                 const den = nCr(Mv, k);
                 const none = nCr(Mv - t, k);
-                s += w[k] * (den > 0 ? 1 - none / den : 0);
+                s += w[k as 0 | 1 | 2 | 3 | 4] * (den > 0 ? 1 - none / den : 0);
             }
         }
         return s;
@@ -135,13 +149,13 @@ export const useCalculatorStore = defineStore("calculator", () => {
     const n90 = computed<number | null>(() => killsFor(0.9, pAllPicked.value));
     const n99 = computed<number | null>(() => killsFor(0.99, pAllPicked.value));
 
-    // Форматтеры как чистые функции (стабильные по типам)
-    const fmtPct = (p: number): string => (p * 100).toFixed(4) + "%";
-    const fmtNum = (n: number | null): string => (n == null ? "—" : n.toLocaleString("ru-RU"));
+    // Форматтеры как чистые функции
+    const fmtPct = (p: number): string => nfPct.format(p);
+    const fmtNum = (n: number | null): string => (n == null ? "—" : nfInt.format(n));
 
     // Быстрые проверки
-    const hasPicked = (m: ModKey): boolean => picked.value.includes(m);
-    const inPool = (m: ModKey): boolean => pool.value.includes(m);
+    const hasPicked = (m: ModKey): boolean => pickedSet.value.has(m);
+    const inPool = (m: ModKey): boolean => poolSet.value.has(m);
 
     // --- actions
     const togglePicked = (mod: ModKey): void => {
@@ -151,7 +165,7 @@ export const useCalculatorStore = defineStore("calculator", () => {
             return;
         }
         if (picked.value.length >= MAX_TARGETS) return;
-        if (!pool.value.includes(mod)) return;
+        if (!poolSet.value.has(mod)) return;
         picked.value.push(mod);
     };
 
@@ -166,17 +180,17 @@ export const useCalculatorStore = defineStore("calculator", () => {
         }
     };
 
-    const setWeight = <K extends keyof Weights>(key: K, value: number): void => {
-        weights.value[key] = value < 0 ? 0 : value;
+    const setWeight = (index: 0 | 1 | 2 | 3 | 4, value: number): void => {
+        weights.value = updateWeightsTuple(weights.value, index, value);
     };
 
     const resetAll = (): void => {
-        pool.value = [...ALL_MODS];
+        pool.value = [...DEFAULT_POOL];
         picked.value = [];
-        weights.value = { k0: 0.8218, k1: 0.1089, k2: 0.0396, k3: 0.0198, k4: 0.0099 };
+        weights.value = DEFAULT_WEIGHTS;
     };
 
-    // вернуть всё наружу (полностью типизировано)
+    // вернуть всё наружу
     return {
         // state
         pool,
