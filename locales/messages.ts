@@ -159,6 +159,7 @@ export default {
                     value: "Уровень сложности",
                     hint: "Чем выше сложность, тем больше базовый шанс на дроп.",
                 },
+                probLabel: "Шанс выпадения:",
                 // Новый блок ожиданий (левая карточка)
                 killsCalc: "Расчёт количества убийств",
                 n50: "Убийств боссов до 50%",
@@ -356,6 +357,7 @@ export default {
                     value: "Difficulty level",
                     hint: "The higher the difficulty, the greater the base drop chance.",
                 },
+                probLabel: "Chance of falling out:",
                 // New left card
                 killsCalc: "Boss kill calculations",
                 n50: "Boss kills for 50%",

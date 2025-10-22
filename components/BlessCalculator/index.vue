@@ -4,17 +4,14 @@ import { useI18n } from "vue-i18n";
 
 const { t, locale } = useI18n();
 
-const players = ref(1);    // 1..5
-const difficulty = ref(1); // 1..20
+const players = ref(1);
+const difficulty = ref(1);
 
-// Формула BSA:
-// random = RandomInt(0, 20000 - 500*difficulty); drop если random < 5
-// p_team = 5 / ((20000 - 500*difficulty) + 1)
+// Формула Boss Survival Adventure
 const maxRoll = computed(() => 20000 - 500 * difficulty.value);
-const pTeam   = computed(() => 5 / (maxRoll.value + 1));
-const pYou    = computed(() => pTeam.value / players.value);
+const pTeam = computed(() => 5 / (maxRoll.value + 1));
+const pYou = computed(() => pTeam.value / players.value);
 
-// Сколько убийств нужно для вероятности P при шансе p за одно убийство
 function killsFor(P: number, p: number): number | null {
   if (p <= 0) return null;
   if (p >= 1) return 1;
@@ -23,18 +20,20 @@ function killsFor(P: number, p: number): number | null {
   return Math.ceil(n);
 }
 
-// Команда
-const n50Team = computed(() => killsFor(0.5,  pTeam.value));
-const n90Team = computed(() => killsFor(0.9,  pTeam.value));
+const n50Team = computed(() => killsFor(0.5, pTeam.value));
+const n90Team = computed(() => killsFor(0.9, pTeam.value));
 const n99Team = computed(() => killsFor(0.99, pTeam.value));
-// Ты лично (зависит от players)
-const n50You  = computed(() => killsFor(0.5,  pYou.value));
-const n90You  = computed(() => killsFor(0.9,  pYou.value));
-const n99You  = computed(() => killsFor(0.99, pYou.value));
+
+const n50You = computed(() => killsFor(0.5, pYou.value));
+const n90You = computed(() => killsFor(0.9, pYou.value));
+const n99You = computed(() => killsFor(0.99, pYou.value));
 
 function fmtKills(n: number | null) {
   const loc = locale.value === "ru" ? "ru-RU" : "en-US";
   return n == null ? "—" : n.toLocaleString(loc);
+}
+function fmtPct(p: number) {
+  return (p * 100).toFixed(4) + "%";
 }
 </script>
 
@@ -45,7 +44,7 @@ function fmtKills(n: number | null) {
         {{ t("calc.bless.title") }}
       </h2>
 
-      <!-- controls -->
+      <!-- Controls -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="p-4 rounded-xl border border-surface/40 bg-surface">
           <label class="block text-sm text-text-muted mb-2">
@@ -76,12 +75,18 @@ function fmtKills(n: number | null) {
         </div>
       </div>
 
-      <!-- results -->
+      <!-- Results -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Для команды -->
         <div class="p-5 rounded-xl border border-primary/30 bg-surface">
           <h3 class="font-semibold text-primary mb-2">{{ t("calc.bless.team.title") }}</h3>
-          <ul class="mt-2 space-y-2 text-sm text-text-muted">
+
+          <div class="flex items-baseline justify-between mb-2 text-sm text-text-muted">
+            <span>{{ t("calc.bless.probLabel") }}</span>
+            <span class="font-mono font-medium text-text">{{ fmtPct(pTeam) }}</span>
+          </div>
+
+          <ul class="space-y-2 text-sm text-text-muted">
             <li class="flex items-baseline justify-between">
               <span>{{ t("calc.bless.n50") }}</span>
               <span class="font-mono font-medium text-text">{{ fmtKills(n50Team) }}</span>
@@ -95,6 +100,7 @@ function fmtKills(n: number | null) {
               <span class="font-mono font-medium text-text">{{ fmtKills(n99Team) }}</span>
             </li>
           </ul>
+
           <p class="mt-3 text-xs text-text-muted">
             {{ t("calc.bless.trialsNote") }}
           </p>
@@ -103,7 +109,13 @@ function fmtKills(n: number | null) {
         <!-- Для тебя лично -->
         <div class="p-5 rounded-xl border border-primary/30 bg-surface">
           <h3 class="font-semibold text-primary mb-2">{{ t("calc.bless.you.title") }}</h3>
-          <ul class="mt-2 space-y-2 text-sm text-text-muted">
+
+          <div class="flex items-baseline justify-between mb-2 text-sm text-text-muted">
+            <span>{{ t("calc.bless.probLabel") }}</span>
+            <span class="font-mono font-medium text-text">{{ fmtPct(pYou) }}</span>
+          </div>
+
+          <ul class="space-y-2 text-sm text-text-muted">
             <li class="flex items-baseline justify-between">
               <span>{{ t("calc.bless.n50") }}</span>
               <span class="font-mono font-medium text-text">{{ fmtKills(n50You) }}</span>
@@ -117,6 +129,7 @@ function fmtKills(n: number | null) {
               <span class="font-mono font-medium text-text">{{ fmtKills(n99You) }}</span>
             </li>
           </ul>
+
           <p class="mt-3 text-xs text-text-muted">
             {{ t("calc.bless.note") }}
           </p>
