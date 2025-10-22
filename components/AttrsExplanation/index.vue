@@ -9,12 +9,12 @@ const tips = computed(() => (tm("article.attrs.tips.items") as string[]) || []);
 const soloRows = computed(
     () => (tm("article.attrs.tables.solo.rows") as Array<Record<string, string>>) || []
 );
+// ✅ guild и reroll лежат не в tables, а напрямую в article.attrs
 const guildRows = computed(
-    () => (tm("article.attrs.tables.guild.rows") as Array<Record<string, string>>) || []
+    () => (tm("article.attrs.guild.rows") as Array<Record<string, string>>) || []
 );
-// 🔹 новая таблица — распределение при удачном переролле
 const rerollRows = computed(
-    () => (tm("article.attrs.tables.reroll.rows") as Array<Record<string, string>>) || []
+    () => (tm("article.attrs.reroll.rows") as Array<Record<string, string>>) || []
 );
 </script>
 
@@ -93,7 +93,7 @@ const rerollRows = computed(
 
       <!-- Таблица GUILD -->
       <h3 class="text-xl font-semibold text-primary mt-8 mb-3">
-        {{ t("article.attrs.tables.guild.title") }}
+        {{ t("article.attrs.guild.title") }}
       </h3>
 
       <div
@@ -135,9 +135,9 @@ const rerollRows = computed(
         </table>
       </div>
 
-      <!-- 🔹 Таблица REROLL -->
+      <!-- Таблица REROLL -->
       <h3 class="text-xl font-semibold text-primary mt-8 mb-3">
-        {{ t("article.attrs.tables.reroll.title") }}
+        {{ t("article.attrs.reroll.title") }}
       </h3>
 
       <div
@@ -149,8 +149,10 @@ const rerollRows = computed(
               class="bg-surface/70 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-surface/60
                    text-text-muted/90 text-xs uppercase tracking-wide"
           >
-          <tr class="[&>th]:font-medium [&>th]:p-3 [&>th]:whitespace-nowrap [&>th]:border-b [&>th]:border-surface/50">
-            <th class="text-left">{{ t("article.attrs.tables.reroll.header") }}</th>
+          <tr
+              class="[&>th]:font-medium [&>th]:p-3 [&>th]:whitespace-nowrap [&>th]:border-b [&>th]:border-surface/50"
+          >
+            <th class="text-left">{{ t("article.attrs.reroll.header") }}</th>
             <th class="text-right">4</th>
             <th class="text-right">3</th>
             <th class="text-right">2</th>
@@ -158,7 +160,11 @@ const rerollRows = computed(
             <th class="text-right">0</th>
           </tr>
           </thead>
-          <tbody class="[&>tr:nth-child(even)]:bg-surface/30 [&>tr:hover]:bg-primary/5 [&>tr]:border-t [&>tr]:border-surface/30">
+
+          <tbody
+              class="[&>tr:nth-child(even)]:bg-surface/30 [&>tr:hover]:bg-primary/5
+                   [&>tr]:border-t [&>tr]:border-surface/30"
+          >
           <tr v-for="(r, i) in rerollRows" :key="'reroll-' + i">
             <td class="p-3 text-text-muted whitespace-nowrap">{{ r.title }}</td>
             <td class="p-3 text-right font-mono whitespace-nowrap">{{ r.a4 }}</td>
