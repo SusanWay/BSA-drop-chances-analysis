@@ -162,16 +162,16 @@ export default {
                 probLabel: "Шанс выпадения:",
                 // Новый блок ожиданий (левая карточка)
                 killsCalc: "Расчёт количества убийств",
-                n50: "Убийств боссов до 50%",
-                n90: "Убийств боссов до 90%",
-                n99: "Убийств боссов до 99%",
+                n50: "Убийств крипов до 50%",
+                n90: "Убийств крипов до 90%",
+                n99: "Убийств крипов до 99%",
                 trialsNote: "Расчёт: N = ln(1 − P) / ln(1 − p), где p — шанс дропа за одно убийство. Округляется вверх.",
                 // Остальные ключи остаются для правой карточки
                 team: { title: "Для команды" },
                 you: { title: "Для тебя лично" },
                 prob: "Шанс за убийство",
                 expectedKills: "Ожидаемое число убийств",
-                note: "Личный шанс = командный шанс ÷ число игроков.",
+                note: "Личный шанс = командный шанс / число игроков.",
                 warning: {
                     title: "Важно знать",
                     body: "Нет точных данных, на каких мобах срабатывает проверка на выпадение. Вероятно, призванные существа (summons) не считаются — например, пуджи на второй локации.",
@@ -360,16 +360,16 @@ export default {
                 probLabel: "Chance of falling out:",
                 // New left card
                 killsCalc: "Boss kill calculations",
-                n50: "Boss kills for 50%",
-                n90: "Boss kills for 90%",
-                n99: "Boss kills for 99%",
+                n50: "Mobs kills for 50%",
+                n90: "Mobs kills for 90%",
+                n99: "Mobs kills for 99%",
                 trialsNote: "Computed as N = ln(1 − P) / ln(1 − p), where p is the per-kill drop chance. Rounded up.",
                 // Right card stays
                 team: { title: "For the team" },
                 you: { title: "For you personally" },
                 prob: "Chance per kill",
                 expectedKills: "Expected kills",
-                note: "Personal chance = team chance ÷ number of players.",
+                note: "Personal chance = team chance / number of players.",
                 warning: {
                     title: "Important note",
                     body: "There’s no exact data on which mobs trigger the drop check. It’s likely that summoned units (summons) don’t count — for example, Pudge on the second map.",
