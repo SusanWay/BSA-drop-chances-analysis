@@ -31,8 +31,32 @@ export const ALL_MODS = Object.keys(MOD_META) as ModKey[];
 
 // ===== Веса как кортеж фиксированной длины =====
 export type Weights5 = readonly [number, number, number, number, number];
-const DEFAULT_WEIGHTS: Weights5 = [0.8218, 0.1089, 0.0396, 0.0198, 0.0099] as const;
-const DEFAULT_POOL: ModKey[] = [...ALL_MODS];
+
+// значения по умолчанию (используются в сторах и UI)
+export const DEFAULT_WEIGHTS: Weights5 = [0.8218, 0.1089, 0.0396, 0.0198, 0.0099] as const;
+export const DEFAULT_POOL: ModKey[] = [...ALL_MODS];
+
+// --- адаптер: приводим что угодно к кортежу из 5 чисел
+function ensureWeightsTuple(w: unknown): Weights5 {
+    // массив или кортеж
+    if (Array.isArray(w)) {
+        const a = w.map((x) => (typeof x === "number" && isFinite(x) ? x : 0));
+        const out: [number, number, number, number, number] = [
+            a[0] ?? 0, a[1] ?? 0, a[2] ?? 0, a[3] ?? 0, a[4] ?? 0,
+        ];
+        return out;
+    }
+    // старый объектный формат {k0..k4}
+    if (w && typeof w === "object") {
+        const o = w as Record<string, unknown>;
+        const toNum = (v: unknown) => (typeof v === "number" && isFinite(v) ? v : 0);
+        const out: [number, number, number, number, number] = [
+            toNum(o.k0), toNum(o.k1), toNum(o.k2), toNum(o.k3), toNum(o.k4),
+        ];
+        return out;
+    }
+    return [...DEFAULT_WEIGHTS] as Weights5;
+}
 
 // ===== Вспомогательные функции =====
 function nCr(n: number, r: number): number {
@@ -46,14 +70,14 @@ function nCr(n: number, r: number): number {
 }
 
 function normalizeWeights(w: Weights5): Weights5 {
-    const sum = w.reduce((a, b) => a + b, 0) || 1;
-    return [w[0] / sum, w[1] / sum, w[2] / sum, w[3] / sum, w[4] / sum];
+    const arr = ensureWeightsTuple(w);
+    const sum = arr[0] + arr[1] + arr[2] + arr[3] + arr[4] || 1;
+    return [arr[0] / sum, arr[1] / sum, arr[2] / sum, arr[3] / sum, arr[4] / sum];
 }
 
 function killsFor(P: number, p: number): number | null {
     if (p <= 0) return null;
     if (p >= 1) return 1;
-    // устойчивее для малых p
     const ln1mP = Math.log1p(-P);
     const ln1mp = Math.log1p(-p);
     const n = ln1mP / ln1mp;
@@ -61,19 +85,20 @@ function killsFor(P: number, p: number): number | null {
     return Math.ceil(n);
 }
 
-// Один Intl для форматирования
+// Форматтеры
 const nfPct = new Intl.NumberFormat("ru-RU", { style: "percent", maximumFractionDigits: 4 });
 const nfInt = new Intl.NumberFormat("ru-RU");
 
 // безопасный апдейтер кортежа весов
 function updateWeightsTuple(w: Weights5, i: 0 | 1 | 2 | 3 | 4, v: number): Weights5 {
-    const nv = Math.max(0, v);
+    const base = ensureWeightsTuple(w);
+    const nv = Math.max(0, Number(v));
     return [
-        i === 0 ? nv : w[0],
-        i === 1 ? nv : w[1],
-        i === 2 ? nv : w[2],
-        i === 3 ? nv : w[3],
-        i === 4 ? nv : w[4],
+        i === 0 ? nv : base[0],
+        i === 1 ? nv : base[1],
+        i === 2 ? nv : base[2],
+        i === 3 ? nv : base[3],
+        i === 4 ? nv : base[4],
     ];
 }
 
@@ -95,13 +120,13 @@ export const useCalculatorStore = defineStore("calculator", () => {
 
     const weightsNorm = computed<Weights5>(() => normalizeWeights(weights.value));
 
-    // Вероятности
+    // --- вероятности
     const pAllPicked = computed<number>(() => {
         const w = weightsNorm.value;
         const Mv = M.value;
         const t = tCount.value;
 
-        if (t === 0) return 1;          // пустое множество всегда «выпало»
+        if (t === 0) return 1;
         if (t > Mv || t > MAX_K) return 0;
 
         let s = 0;
@@ -119,9 +144,7 @@ export const useCalculatorStore = defineStore("calculator", () => {
         const w = weightsNorm.value;
         const t = tCount.value;
         const Mv = M.value;
-
         if (t < 0 || t > MAX_K || Mv < t) return 0;
-
         const den = nCr(Mv, t);
         return w[t as 0 | 1 | 2 | 3 | 4] * (den > 0 ? 1 / den : 0);
     });
@@ -130,7 +153,6 @@ export const useCalculatorStore = defineStore("calculator", () => {
         const w = weightsNorm.value;
         const Mv = M.value;
         const t = tCount.value;
-
         if (t === 0 || t > Mv) return 0;
 
         let s = 0;
@@ -144,16 +166,16 @@ export const useCalculatorStore = defineStore("calculator", () => {
         return s;
     });
 
-    // Кол-во убийств для заданной вероятности
+    // --- убийства для вероятности
     const n50 = computed<number | null>(() => killsFor(0.5, pAllPicked.value));
     const n90 = computed<number | null>(() => killsFor(0.9, pAllPicked.value));
     const n99 = computed<number | null>(() => killsFor(0.99, pAllPicked.value));
 
-    // Форматтеры как чистые функции
+    // --- форматтеры
     const fmtPct = (p: number): string => nfPct.format(p);
     const fmtNum = (n: number | null): string => (n == null ? "—" : nfInt.format(n));
 
-    // Быстрые проверки
+    // --- проверки
     const hasPicked = (m: ModKey): boolean => pickedSet.value.has(m);
     const inPool = (m: ModKey): boolean => poolSet.value.has(m);
 
@@ -217,5 +239,7 @@ export const useCalculatorStore = defineStore("calculator", () => {
         togglePool,
         setWeight,
         resetAll,
+        // экспорт значений по умолчанию (для UI)
+        DEFAULT_WEIGHTS,
     };
 });
