@@ -4,6 +4,7 @@ export default defineNuxtConfig({
     modules: [
         ["@nuxtjs/tailwindcss", { viewer: false }],
         "@nuxtjs/google-fonts",
+        "@pinia/nuxt",
     ],
     googleFonts: {
         families: { Roboto: [100, 300, 400, 500, 700] },
@@ -13,7 +14,7 @@ export default defineNuxtConfig({
     },
     postcss: { plugins: { tailwindcss: {}, autoprefixer: {} } },
 
-    // 👇 ОБЯЗАТЕЛЬНО для GitHub Pages
+    // для GitHub Pages
     app: {
         baseURL: "/BSA-drop-chances-analysis/", // <-- твой репозиторий
         buildAssetsDir: "assets",               // аккуратные относительные пути
