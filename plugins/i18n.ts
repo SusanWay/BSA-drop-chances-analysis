@@ -1,6 +1,6 @@
 // plugins/i18n.ts
 import { createI18n } from "vue-i18n";
-import messages from "@/locales/messages";
+import { messages } from "@/locales";
 
 export default defineNuxtPlugin((nuxtApp) => {
     const i18n = createI18n({
@@ -9,6 +9,5 @@ export default defineNuxtPlugin((nuxtApp) => {
         fallbackLocale: "en",
         messages,
     });
-
     nuxtApp.vueApp.use(i18n);
 });

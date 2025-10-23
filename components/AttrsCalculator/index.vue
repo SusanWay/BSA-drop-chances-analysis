@@ -129,11 +129,15 @@ const ge1 = computed(() => probs.value[1] + probs.value[2] + probs.value[3] + pr
           </div>
         </div>
 
-        <!-- 🔶 Предупреждение -->
-        <div class="rounded-xl border border-amber-300/40 bg-amber-200/10 p-4">
-          <p class="text-sm">
-            <span class="font-medium text-amber-400">⚠ {{ t("calc.attrs.warning.title") }}:</span>
-            <span class="text-text-muted"> {{ t("calc.attrs.warning.body") }}</span>
+        <!-- 🔴 Предупреждение -->
+        <div class="rounded-xl border border-red-400/60 bg-red-500/10 p-5 mt-2">
+          <p class="text-sm leading-relaxed">
+            <span class="font-semibold text-red-500">
+              ⚠ {{ t("calc.attrs.warning.title") }}:
+            </span>
+            <span class="text-text font-medium">
+              {{ t("calc.attrs.warning.body") }}
+            </span>
           </p>
         </div>
       </div>

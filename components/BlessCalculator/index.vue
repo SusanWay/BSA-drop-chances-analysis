@@ -137,10 +137,14 @@ function fmtPct(p: number) {
       </div>
 
       <!-- warning -->
-      <div class="mt-6 rounded-xl border border-amber-300/40 bg-amber-200/10 p-4">
-        <p class="text-sm">
-          <span class="font-medium text-amber-400">⚠ {{ t("calc.bless.warning.title") }}:</span>
-          <span class="text-text-muted"> {{ t("calc.bless.warning.body") }}</span>
+      <div class="mt-6 rounded-xl border border-red-400/60 bg-red-500/10 p-5">
+        <p class="text-sm leading-relaxed">
+          <span class="font-semibold text-red-500">
+            ⚠ {{ t("calc.bless.warning.title") }}:
+          </span>
+          <span class="text-text font-medium">
+            {{ t("calc.bless.warning.body") }}
+          </span>
         </p>
       </div>
     </div>
