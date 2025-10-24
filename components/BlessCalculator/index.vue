@@ -140,10 +140,16 @@ function fmtPct(p: number) {
       <div class="mt-6 rounded-xl border border-red-400/60 bg-red-500/10 p-5">
         <p class="text-sm leading-relaxed">
           <span class="font-semibold text-red-500">
-            ⚠ {{ t("calc.bless.warning.title") }}:
+            ⚠ {{ t("calc.bless.warning.title") }}
           </span>
+          <br />
           <span class="text-text font-medium">
-            {{ t("calc.bless.warning.body") }}
+            {{ t("calc.bless.warning.line1") }}
+          </span>
+          <br />
+          <span class="text-text font-medium">
+            {{ t("calc.bless.warning.line2Prefix") }}
+            <span class="font-semibold text-primary">vishnya_net_chereshnya</span>.
           </span>
         </p>
       </div>
